@@ -4,7 +4,9 @@ import axios from 'axios';
 import './styles.css';
 
 const { Title, Paragraph, Text } = Typography;
-const BASE_URL = import.meta.env.VITE_AUTOMATION_SERVER_URL || 'http://localhost:3001';
+// Default to localhost - change VITE_AUTOMATION_SERVER_URL env var if needed
+// Remove trailing slash to avoid double slashes in URLs
+const BASE_URL = (import.meta.env.VITE_AUTOMATION_SERVER_URL || 'http://localhost:3001').replace(/\/$/, '');
 
 const flows = [
   { key: 'login', label: 'Login (Playwright)', endpoint: '/api/automation/run-login' },
@@ -25,7 +27,9 @@ function App() {
 
   const checkHealth = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/health`, { timeout: 4000 });
+      // Ensure /health endpoint is properly constructed
+      const healthUrl = `${BASE_URL}/health`;
+      const res = await axios.get(healthUrl, { timeout: 4000 });
       if (res.status === 200) {
         setHealthOk(true);
         message.success('Automation server is reachable.');
@@ -48,7 +52,9 @@ function App() {
         return;
       }
       const body = { headed: flow.headed !== false };
-      const res = await axios.post(`${BASE_URL}${flow.endpoint}`, body, { timeout: 1000 * 60 * 10 });
+      // Ensure endpoint starts with / to avoid double slashes
+      const endpoint = flow.endpoint.startsWith('/') ? flow.endpoint : `/${flow.endpoint}`;
+      const res = await axios.post(`${BASE_URL}${endpoint}`, body, { timeout: 1000 * 60 * 10 });
       if (res.data?.success !== false) {
         message.success(`${flow.label} completed`);
       } else {
